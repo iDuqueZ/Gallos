@@ -8,7 +8,7 @@ BatallaCtrl.crearAutomatica = async (req, res) => {
         // Obtener todos los gallos registrados
         const gallos = await Gallo.find();
 
-        // Filtrar los gallos con peso similar
+        // Filtrar los gallos con peso similar 0.1
         const margenPeso = req.body.margenPeso; // Margen de peso permitido para considerarlos similares
         const gallosSimilares = [];
 
@@ -128,7 +128,7 @@ BatallaCtrl.actualizarGanador = async (req, res) => {
     await Gallo.findByIdAndUpdate(ganadorId, { $inc: { ganadas: 1 }, $push: { tiempo } });
 
     // Incrementar el campo "perdidas" del gallo perdedor
-    await Gallo.findByIdAndUpdate(perdedorId, { $inc: { perdidas: 1 }, $push: { tiempo } });
+    await Gallo.findByIdAndUpdate(perdedorId, { $inc: { perdidas: 1 } });
 
     const respuesta = await batalla.save();
 

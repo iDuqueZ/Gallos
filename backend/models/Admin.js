@@ -8,7 +8,7 @@ const AdminSchema = new Schema({
     },
     contrasena:{ 
       type: String, 
-      required: [true, 'El usuario es obligatorio']
+      required: [true, 'El contrasena es obligatorio']
     }
 })
 

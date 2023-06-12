@@ -15,7 +15,7 @@ app.use(bodyparser.urlencoded({extended: true}));
 app.use(bodyparser.json());
 app.use(cors({origen: '*'}));
  
-
+// Declaración del router
 app.use('/admin', require('./routes/Admin'))
 app.use('/gallo', require('./routes/Gallo'))
 app.use('/batalla', require('./routes/Batalla'))
