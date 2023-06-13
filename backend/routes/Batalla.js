@@ -5,10 +5,10 @@ const BatallaCtrl = require('../controller/BatallaCtrl');
 // Ruta para crear una nueva batalla
 router.post('/crear', BatallaCtrl.crear);
 
-router.post('/crearauto', BatallaCtrl.crearAutomatica);
+router.post('/crearauto/:adminId', BatallaCtrl.crearAutomatica);
 
 // Ruta para obtener todas las batallas
-router.get('/listar', BatallaCtrl.listar);
+router.get('/listar/:adminId', BatallaCtrl.listar);
 
 // Ruta para obtener una batalla por su ID
 // router.get('/listar/:id', BatallaCtrl.listarPorId);

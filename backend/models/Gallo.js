@@ -53,7 +53,12 @@ const GalloSchema = new Schema ({
       },
       perdidas: {
         type: Number
-      }
+      },
+      adminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin',
+        required: true
+    },
 })
 
 module.exports = mongoose.model('gallo', GalloSchema)

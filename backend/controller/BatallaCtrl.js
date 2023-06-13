@@ -5,47 +5,53 @@ const BatallaCtrl = {};
 
 BatallaCtrl.crearAutomatica = async (req, res) => {
     try {
-        // Obtener todos los gallos registrados
-        const gallos = await Gallo.find();
-
-        // Filtrar los gallos con peso similar 0.1
-        const margenPeso = req.body.margenPeso; // Margen de peso permitido para considerarlos similares
-        const gallosSimilares = [];
-
-        for (let i = 0; i < gallos.length; i++) {
-            const galloActual = gallos[i];
-
-            for (let j = i + 1; j < gallos.length; j++) {
-                const galloComparado = gallos[j];
-
-                if (Math.abs(galloActual.peso - galloComparado.peso) <= margenPeso) {
-                    gallosSimilares.push({ azul: galloActual, rojo: galloComparado });
-                }
-            }
+      const adminId = req.params.adminId;
+      const admin = await Admin.findById(adminId);
+      if (!admin) {
+        return res.status(404).json({ mensaje: 'Admin no encontrado' });
+      }
+  
+      // Obtener todos los gallos registrados
+      const gallos = await Gallo.find({ admin: adminId });
+  
+      // Filtrar los gallos con peso similar 0.1
+      const margenPeso = req.body.margenPeso; // Margen de peso permitido para considerarlos similares
+      const gallosSimilares = [];
+  
+      for (let i = 0; i < gallos.length; i++) {
+        const galloActual = gallos[i];
+  
+        for (let j = i + 1; j < gallos.length; j++) {
+          const galloComparado = gallos[j];
+  
+          if (Math.abs(galloActual.peso - galloComparado.peso) <= margenPeso) {
+            gallosSimilares.push({ azul: galloActual, rojo: galloComparado });
+          }
         }
-
-        // Crear las batallas automáticamente
-        const batallasCreadas = [];
-
-        for (const { azul, rojo } of gallosSimilares) {
-            const nuevaBatalla = new Batalla({
-                peleadorAzul: azul._id,
-                peleadorRojo: rojo._id,
-                ganador: null // Por defecto, no hay ganador al crear la batalla
-            });
-
-            const respuesta = await nuevaBatalla.save();
-            batallasCreadas.push(respuesta);
-        }
-
-        res.json({
-            mensaje: 'Batallas creadas automáticamente',
-            batallas: batallasCreadas
+      }
+  
+      // Crear las batallas automáticamente
+      const batallasCreadas = [];
+  
+      for (const { azul, rojo } of gallosSimilares) {
+        const nuevaBatalla = new Batalla({
+          peleadorAzul: azul._id,
+          peleadorRojo: rojo._id,
+          ganador: null // Por defecto, no hay ganador al crear la batalla
         });
+  
+        const respuesta = await nuevaBatalla.save();
+        batallasCreadas.push(respuesta);
+      }
+  
+      res.json({
+        mensaje: 'Batallas creadas automáticamente',
+        batallas: batallasCreadas
+      });
     } catch (error) {
-        res.status(500).json({ error: 'Error al crear las batallas automáticamente' });
+      res.status(500).json({ error: 'Error al crear las batallas automáticamente' });
     }
-};
+  };
 
 BatallaCtrl.crear = async (req, res) => {
     try {
@@ -89,16 +95,23 @@ BatallaCtrl.crear = async (req, res) => {
 
 BatallaCtrl.listar = async (req, res) => {
     try {
-        const batallas = await Batalla.find()
-            .populate('peleadorAzul', 'cuerda') // Popula los datos del gallo azul (solo muestra la cuerda)
-            .populate('peleadorRojo', 'cuerda') // Popula los datos del gallo rojo (solo muestra la cuerda)
-            .populate('ganador', 'cuerda'); // Popula los datos del gallo ganador (solo muestra la cuerda)
-
-        res.json(batallas);
+      const adminId = req.params.adminId;
+      const batallas = await Batalla.find({
+        $or: [
+          { peleadorAzul: adminId },
+          { peleadorRojo: adminId },
+          { ganador: adminId }
+        ]
+      })
+        .populate('peleadorAzul', 'cuerda') // Popula los datos del gallo azul (solo muestra la cuerda)
+        .populate('peleadorRojo', 'cuerda') // Popula los datos del gallo rojo (solo muestra la cuerda)
+        .populate('ganador', 'cuerda'); // Popula los datos del gallo ganador (solo muestra la cuerda)
+  
+      res.json(batallas);
     } catch (error) {
-        res.status(500).json({ error: 'Error al obtener la lista de batallas' });
+      res.status(500).json({ error: 'Error al obtener la lista de batallas' });
     }
-};
+  };
 
 BatallaCtrl.actualizarGanador = async (req, res) => {
   try {
