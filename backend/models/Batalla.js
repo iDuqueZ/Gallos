@@ -19,6 +19,10 @@ const batallaSchema = new mongoose.Schema({
     ganador: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Gallo'
+    },
+    adminId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin',
     }
 });
 

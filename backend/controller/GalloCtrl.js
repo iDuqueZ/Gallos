@@ -7,6 +7,17 @@ GalloCtrl.crear = async (req, res) => {
     try {
         const { cuerda, frente, ciudad, color, peso, jaula, marca, tipo, placa, anillo, adminId } = req.body;
 
+        // Verificar si ya existe un gallo con la misma cuerda, frente o anillo
+        const galloExistente = await Gallo.findOne({ cuerda, frente });
+        if (galloExistente) {
+            return res.status(400).json({ mensaje: 'Ya existe un gallo con la misma cuerda, frente o anillo' });
+        }
+
+        const galloExistente2 = await Gallo.findOne({ anillo });
+        if (galloExistente2) {
+            return res.status(400).json({ mensaje: 'Ya existe un gallo con ese anillo' });
+        }
+
         const nuevoGallo = new Gallo({
             cuerda,
             frente,
@@ -36,9 +47,10 @@ GalloCtrl.crear = async (req, res) => {
             respuesta
         });
     } catch (error) {
-        res.status(500).json({ error: 'Error al crear el gallo' });
+        res.status(500).json({ error: 'Error al crear el gallo', descrip: error });
     }
 };
+
 
 
 GalloCtrl.listar = async (req, res) => {
