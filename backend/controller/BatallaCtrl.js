@@ -32,28 +32,20 @@ BatallaCtrl.crearAutomatica = async (req, res) => {
 
     // Obtener todos los gallos registrados
     const gallos = await Gallo.find({ adminId: adminId });
+    console.log(gallos.length)
 
-    // Filtrar gallos por peso en subconjuntos
-    const gallosPesoFiltrado = {};
-    gallos.forEach((gallo) => {
-      const pesoKey = Math.round(gallo.peso / margenPeso);
-      if (!gallosPesoFiltrado[pesoKey]) {
-        gallosPesoFiltrado[pesoKey] = [];
-      }
-      gallosPesoFiltrado[pesoKey].push(gallo);
-    });
+    // Obtener los gallos disponibles que no participan en ninguna batalla
+    const gallosDisponibles = await obtenerGallosDisponibles(gallos, adminId);
 
-    // Crear las batallas automáticamente con gallos de mismo peso
-    const batallasCreadasMismoPeso = [];
-    for (const pesoKey in gallosPesoFiltrado) {
-      const gallosSubconjunto = gallosPesoFiltrado[pesoKey];
-      const batallasSubconjunto = await crearBatallasSubconjunto(gallosSubconjunto, adminId);
-      batallasCreadasMismoPeso.push(...batallasSubconjunto);
-    }
+    // Obtener las batallas existentes
+    const batallasExistentes = await Batalla.find({ adminId: adminId });
+
+    // Crear las batallas automáticamente con gallos de pesos similares
+    const batallasCreadas = await crearBatallasSimilares(gallosDisponibles, margenPeso, batallasExistentes, adminId);
 
     res.json({
       mensaje: 'Batallas creadas automáticamente',
-      batallasMismoPeso: batallasCreadasMismoPeso,
+      batallasSimilares: batallasCreadas,
     });
 
   } catch (error) {
@@ -61,16 +53,80 @@ BatallaCtrl.crearAutomatica = async (req, res) => {
   }
 };
 
-const crearBatallasSubconjunto = async (gallosSubconjunto, adminId) => {
-  const batallasCreadas = [];
-  const gallosDisponibles = Array.from(Array(gallosSubconjunto.length).keys());
+const obtenerGallosDisponibles = async (gallos, adminId) => {
+  const gallosDisponibles = [];
 
-  while (gallosDisponibles.length > 1) {
-    // Resto del código para crear batallas dentro del subconjunto
+  try {
+    for (const gallo of gallos) {
+      const estaEnBatalla = await Batalla.findOne({
+        $or: [
+          { peleadorAzul: gallo._id },
+          { peleadorRojo: gallo._id }
+        ],
+        adminId: adminId
+      });
+  
+      if (!estaEnBatalla) {
+        console.log(gallo);
+        gallosDisponibles.push(gallo);
+      }
+    }
+  
+    return gallosDisponibles;
+  } catch (error) {
+   console.log(error) 
+  }
+  
+};
+
+
+
+const crearBatallasSimilares = async (gallos, margenPeso, batallasExistentes, adminId) => {
+  const batallasCreadas = [];
+  const gallosParticipantes = new Set();
+
+  for (let i = 0; i < gallos.length - 1; i++) {
+    const galloAzul = gallos[i];
+
+    if (!gallosParticipantes.has(galloAzul._id)) {
+      for (let j = i + 1; j < gallos.length; j++) {
+        const galloRojo = gallos[j];
+
+        if (
+          !gallosParticipantes.has(galloRojo._id) &&
+          Math.abs(galloAzul.peso - galloRojo.peso) <= margenPeso &&
+          galloAzul.cuerda !== galloRojo.cuerda &&
+          !tieneBatalla(galloAzul._id, galloRojo._id, batallasExistentes)
+        ) {
+          const nuevaBatalla = new Batalla({
+            peleadorAzul: galloAzul._id,
+            peleadorRojo: galloRojo._id,
+            ganador: null,
+            adminId: adminId,
+          });
+
+          const batallaGuardada = await nuevaBatalla.save();
+          batallasCreadas.push(batallaGuardada);
+
+          gallosParticipantes.add(galloAzul._id);
+          gallosParticipantes.add(galloRojo._id);
+          break; // Salir del bucle interno una vez que se ha encontrado un gallo rojo adecuado
+        }
+      }
+    }
   }
 
   return batallasCreadas;
 };
+
+const tieneBatalla = (galloId1, galloId2, batallas) => {
+  return batallas.some(batalla => 
+    (batalla.peleadorAzul.toString() === galloId1 && batalla.peleadorRojo.toString() === galloId2) ||
+    (batalla.peleadorAzul.toString() === galloId2 && batalla.peleadorRojo.toString() === galloId1)
+  );
+};
+
+
 
 
 
