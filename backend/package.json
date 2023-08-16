@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.0",
     "mongoose": "^7.2.3",
     "mongose": "^0.0.2-security",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "nodemon": "^2.0.22"
   }
 }

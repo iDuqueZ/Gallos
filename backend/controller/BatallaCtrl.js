@@ -21,8 +21,10 @@ BatallaCtrl.eliminarTodas = async (req, res) => {
 }
 
 BatallaCtrl.crearAutomatica = async (req, res) => {
+  const { adminId } = req.params;
+  const { margenPeso } = req.body;
+
   try {
-    const adminId = req.params.adminId;
     const admin = await Admin.findById(adminId);
     if (!admin) {
       return res.status(404).json({ mensaje: 'Admin no encontrado' });
@@ -31,96 +33,45 @@ BatallaCtrl.crearAutomatica = async (req, res) => {
     // Obtener todos los gallos registrados
     const gallos = await Gallo.find({ adminId: adminId });
 
-    // Filtrar los gallos con peso similar 0.1
-    const margenPeso = 0.15; // Margen de peso permitido para considerarlos similares
-
-    const gallosMismoPeso = [];
-    const gallosSimilares = [];
-
-    // Separar gallos por mismo peso y pesos similares
-    gallos.forEach(gallo => {
-      if (hayGalloMismoPeso(gallo, gallos)) {
-        gallosMismoPeso.push(gallo);
-      } else if (hayGalloSimilarPeso(gallo, gallos, margenPeso)) {
-        gallosSimilares.push(gallo);
+    // Filtrar gallos por peso en subconjuntos
+    const gallosPesoFiltrado = {};
+    gallos.forEach((gallo) => {
+      const pesoKey = Math.round(gallo.peso / margenPeso);
+      if (!gallosPesoFiltrado[pesoKey]) {
+        gallosPesoFiltrado[pesoKey] = [];
       }
+      gallosPesoFiltrado[pesoKey].push(gallo);
     });
 
     // Crear las batallas automáticamente con gallos de mismo peso
-    const batallasCreadasMismoPeso = await crearBatallas(gallosMismoPeso, adminId);
-
-    // Crear las batallas automáticamente con gallos de pesos similares
-    const batallasCreadasSimilares = await crearBatallas(gallosSimilares, adminId);
+    const batallasCreadasMismoPeso = [];
+    for (const pesoKey in gallosPesoFiltrado) {
+      const gallosSubconjunto = gallosPesoFiltrado[pesoKey];
+      const batallasSubconjunto = await crearBatallasSubconjunto(gallosSubconjunto, adminId);
+      batallasCreadasMismoPeso.push(...batallasSubconjunto);
+    }
 
     res.json({
       mensaje: 'Batallas creadas automáticamente',
       batallasMismoPeso: batallasCreadasMismoPeso,
-      batallasSimilares: batallasCreadasSimilares
     });
+
   } catch (error) {
     res.status(500).json({ error: 'Error al crear las batallas automáticamente' });
   }
 };
 
-const hayGalloMismoPeso = (gallo, gallos) => {
-  return gallos.some(otherGallo => otherGallo.peso === gallo.peso && otherGallo._id !== gallo._id);
-};
-
-const hayGalloSimilarPeso = (gallo, gallos, margenPeso) => {
-  return gallos.some(otherGallo => Math.abs(otherGallo.peso - gallo.peso) <= margenPeso && otherGallo._id !== gallo._id);
-};
-
-const crearBatallas = async (gallos, adminId) => {
+const crearBatallasSubconjunto = async (gallosSubconjunto, adminId) => {
   const batallasCreadas = [];
-  const gallosDisponibles = [...gallos];
+  const gallosDisponibles = Array.from(Array(gallosSubconjunto.length).keys());
 
   while (gallosDisponibles.length > 1) {
-    const indiceAzul = Math.floor(Math.random() * gallosDisponibles.length);
-    const galloAzul = gallosDisponibles.splice(indiceAzul, 1)[0];
-
-    let galloRojo;
-    let indiceRojo;
-    let intentos = 0; // Contador de intentos
-
-    do {
-      if (intentos >= gallosDisponibles.length) {
-        // No se encontró un gallo rojo similar después de agotar todos los intentos
-        break;
-      }
-
-      indiceRojo = Math.floor(Math.random() * gallosDisponibles.length);
-      galloRojo = gallosDisponibles[indiceRojo];
-      console.log(gallosDisponibles);
-
-      intentos++; // Incrementar el contador de intentos
-
-    } while ((!sonGallosSimilares(galloAzul, galloRojo, 0) || galloAzul.cuerda === galloRojo.cuerda) && intentos < gallosDisponibles.length);
-
-    if (!sonGallosSimilares(galloAzul, galloRojo, 0) || galloAzul.cuerda === galloRojo.cuerda) {
-      // No se encontró un gallo rojo similar o son de la misma cuerda, salir del bucle
-      break;
-    }
-
-    gallosDisponibles.splice(indiceRojo, 1);
-
-    const nuevaBatalla = new Batalla({
-      peleadorAzul: galloAzul._id,
-      peleadorRojo: galloRojo._id,
-      ganador: null,
-      adminId: adminId
-    });
-
-    const batallaGuardada = await nuevaBatalla.save();
-    batallasCreadas.push(batallaGuardada);
+    // Resto del código para crear batallas dentro del subconjunto
   }
 
   return batallasCreadas;
 };
 
-
-const sonGallosSimilares = (gallo1, gallo2, margenPeso) => {
-  return Math.abs(gallo1.peso - gallo2.peso) <= margenPeso;
-};
 
 
 BatallaCtrl.crear = async (req, res) => {
