@@ -9,10 +9,6 @@ GalloCtrl.crear = async (req, res) => {
         const { cuerda, frente, ciudad, color, peso, jaula, marca, tipo, placa, anillo, adminId } = req.body;
 
         // Verificar si ya existe un gallo con la misma cuerda, frente o anillo
-        const galloExistente = await Gallo.findOne({ cuerda, frente });
-        if (galloExistente) {
-            return res.status(400).json({ mensaje: 'Ya existe un gallo con la misma cuerda, frente o anillo' });
-        }
 
         const galloExistente2 = await Gallo.findOne({ anillo });
         if (galloExistente2) {
