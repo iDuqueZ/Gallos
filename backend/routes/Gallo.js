@@ -7,6 +7,6 @@ router.post('/nuevo', Auth.verificarToken, GalloCtrl.crear);
 router.get('/listartodos/:adminId', GalloCtrl.listar);
 router.get('/listar/:id', GalloCtrl.listarPorId);
 router.put('/actualizar/:id', Auth.verificarToken, GalloCtrl.actualizar);
-router.delete('/eliminar/:id', Auth.verificarToken, GalloCtrl.eliminar);
+router.delete('/eliminar/:id', GalloCtrl.eliminar);
 
 module.exports = router;
