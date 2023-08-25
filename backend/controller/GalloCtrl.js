@@ -1,6 +1,6 @@
 const Gallo = require('../models/Gallo');
 const Admin = require('../models/Admin')
-const Batalla = require('../models/batalla');
+const Batalla = require('../models/Batalla');
 
 const GalloCtrl = {};
 
