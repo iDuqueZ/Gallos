@@ -1,5 +1,6 @@
 const Gallo = require('../models/Gallo');
 const Admin = require('../models/Admin')
+const Batalla = require('../models/batalla');
 
 const GalloCtrl = {};
 
@@ -101,6 +102,16 @@ GalloCtrl.actualizar = async (req, res) => {
 GalloCtrl.eliminar = async (req, res) => {
     try {
         const id = req.params.id;
+        
+        // Verificar si el gallo está en alguna batalla
+        const galloEnBatalla = await Batalla.findOne({
+            $or: [{ peleadorAzul: id }, { peleadorRojo: id }],
+        });
+
+        if (galloEnBatalla) {
+            return res.status(400).json({ mensaje: 'No se puede eliminar el gallo porque está en una batalla' });
+        }
+
         const respuesta = await Gallo.findByIdAndRemove(id);
 
         if (!respuesta) {

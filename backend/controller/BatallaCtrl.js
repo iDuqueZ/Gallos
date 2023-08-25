@@ -1,4 +1,4 @@
-const Batalla = require('../models/Batalla');
+const Batalla = require('../models/batalla');
 const Gallo = require('../models/Gallo');
 const Admin = require('../models/Admin')
 
